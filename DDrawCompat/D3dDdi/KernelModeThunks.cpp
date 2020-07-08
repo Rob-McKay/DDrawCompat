@@ -4,22 +4,24 @@
 
 #include <d3d.h>
 #include <d3dumddi.h>
+#include <winternl.h>
 #include <../km/d3dkmthk.h>
 
-#include "Common/Log.h"
-#include "Common/Hook.h"
-#include "Common/ScopedCriticalSection.h"
-#include "Common/Time.h"
-#include "D3dDdi/Device.h"
-#include "D3dDdi/Hooks.h"
-#include "D3dDdi/KernelModeThunks.h"
-#include "D3dDdi/Log/KernelModeThunksLog.h"
-#include "D3dDdi/Resource.h"
-#include "D3dDdi/ScopedCriticalSection.h"
-#include "DDraw/ScopedThreadLock.h"
-#include "DDraw/Surfaces/PrimarySurface.h"
-#include "Gdi/Palette.h"
-#include "Win32/DisplayMode.h"
+#include <Common/Log.h>
+#include <Common/Hook.h>
+#include <Common/ScopedCriticalSection.h>
+#include <Common/Time.h>
+#include <D3dDdi/Device.h>
+#include <D3dDdi/Hooks.h>
+#include <D3dDdi/KernelModeThunks.h>
+#include <D3dDdi/Log/KernelModeThunksLog.h>
+#include <D3dDdi/Resource.h>
+#include <D3dDdi/ScopedCriticalSection.h>
+#include <DDraw/RealPrimarySurface.h>
+#include <DDraw/ScopedThreadLock.h>
+#include <DDraw/Surfaces/PrimarySurface.h>
+#include <Gdi/Palette.h>
+#include <Win32/DisplayMode.h>
 
 namespace
 {
@@ -51,6 +53,8 @@ namespace
 	Compat::CriticalSection g_vblankCs;
 
 	decltype(D3DKMTCreateContextVirtual)* g_origD3dKmtCreateContextVirtual = nullptr;
+
+	DWORD WINAPI waitForVsyncThreadProc(LPVOID lpParameter);
 
 	NTSTATUS APIENTRY closeAdapter(const D3DKMT_CLOSEADAPTER* pData)
 	{
@@ -276,6 +280,18 @@ namespace
 		return LOG_RESULT(result);
 	}
 
+	NTSTATUS APIENTRY setGammaRamp(const D3DKMT_SETGAMMARAMP* pData)
+	{
+		LOG_FUNC("D3DKMTSetGammaRamp", pData);
+		HANDLE vsyncThread = CreateThread(nullptr, 0, &waitForVsyncThreadProc, nullptr, 0, nullptr);
+		SetThreadPriority(vsyncThread, THREAD_PRIORITY_TIME_CRITICAL);
+		DDraw::RealPrimarySurface::flush();
+		HRESULT result = D3DKMTSetGammaRamp(pData);
+		WaitForSingleObject(vsyncThread, INFINITE);
+		CloseHandle(vsyncThread);
+		return LOG_RESULT(result);
+	}
+
 	void updateGdiAdapterInfo()
 	{
 		static auto lastDisplaySettingsUniqueness = Win32::DisplayMode::queryDisplaySettingsUniqueness() - 1;
@@ -304,6 +320,12 @@ namespace
 
 			lastDisplaySettingsUniqueness = currentDisplaySettingsUniqueness;
 		}
+	}
+
+	DWORD WINAPI waitForVsyncThreadProc(LPVOID /*lpParameter*/)
+	{
+		D3dDdi::KernelModeThunks::waitForVerticalBlank();
+		return 0;
 	}
 }
 
@@ -383,6 +405,7 @@ namespace D3dDdi
 			Compat::hookIatFunction(origDDrawModule, "gdi32.dll", "D3DKMTOpenAdapterFromHdc", openAdapterFromHdc);
 			Compat::hookIatFunction(origDDrawModule, "gdi32.dll", "D3DKMTQueryAdapterInfo", queryAdapterInfo);
 			Compat::hookIatFunction(origDDrawModule, "gdi32.dll", "D3DKMTPresent", present);
+			Compat::hookIatFunction(origDDrawModule, "gdi32.dll", "D3DKMTSetGammaRamp", setGammaRamp);
 		}
 
 		void setFlipIntervalOverride(UINT flipInterval)

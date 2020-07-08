@@ -4,7 +4,10 @@
 
 #include <d3d.h>
 #include <d3dumddi.h>
+#include <winternl.h>
 #include <../km/d3dkmthk.h>
+
+#include <D3dDdi/Log/CommonLog.h>
 
 std::ostream& operator<<(std::ostream& os, const LUID& luid);
 std::ostream& operator<<(std::ostream& os, const D3DKMT_CREATECONTEXT& data);

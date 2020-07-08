@@ -143,13 +143,11 @@ namespace D3dDdi
 		, m_lockBuffer(nullptr, &heapFree)
 		, m_lockResource(nullptr, ResourceDeleter(device))
 	{
-		if (D3DDDIFMT_VERTEXDATA == data.Format &&
-			data.Flags.VertexBuffer &&
-			data.Flags.MightDrawFromLocked &&
-			D3DDDIPOOL_SYSTEMMEM != data.Pool)
+		if (m_origData.Flags.VertexBuffer &&
+			m_origData.Flags.MightDrawFromLocked &&
+			D3DDDIPOOL_SYSTEMMEM != m_origData.Pool)
 		{
-			const HRESULT D3DERR_NOTAVAILABLE = 0x8876086A;
-			throw HResultException(D3DERR_NOTAVAILABLE);
+			throw HResultException(E_FAIL);
 		}
 
 		fixResourceData(device, reinterpret_cast<D3DDDIARG_CREATERESOURCE&>(m_fixedData));
@@ -338,6 +336,19 @@ namespace D3dDdi
 		{
 			LOG_ONCE("ERROR: Resource::copySubResource failed: " << Compat::hex(result));
 		}
+
+		D3DDDIARG_LOCK lock = {};
+		lock.hResource = m_lockResource.get();
+		lock.SubResourceIndex = subResourceIndex;
+		lock.Flags.NotifyOnly = 1;
+		m_device.getOrigVtable().pfnLock(m_device, &lock);
+
+		D3DDDIARG_UNLOCK unlock = {};
+		unlock.hResource = m_lockResource.get();
+		unlock.SubResourceIndex = subResourceIndex;
+		unlock.Flags.NotifyOnly = 1;
+		m_device.getOrigVtable().pfnUnlock(m_device, &unlock);
+
 		return LOG_RESULT(result);
 	}
 
@@ -464,7 +475,9 @@ namespace D3dDdi
 			}
 		}
 
+#ifdef DEBUGLOGS
 		LOG_RESULT(m_lockResource.get());
+#endif
 	}
 
 	void Resource::endGdiAccess(bool isReadOnly)
@@ -472,31 +485,6 @@ namespace D3dDdi
 		if (m_lockResource && !isReadOnly && m_lockData[0].isSysMemUpToDate)
 		{
 			m_lockData[0].isVidMemUpToDate = false;
-		}
-	}
-
-	void Resource::fixVertexData(UINT offset, UINT count, UINT stride)
-	{
-		if (!m_fixedData.Flags.MightDrawFromLocked ||
-			!m_fixedData.pSurfList[0].pSysMem ||
-			!(m_fixedData.Fvf & D3DFVF_XYZRHW))
-		{
-			return;
-		}
-
-		unsigned char* data = static_cast<unsigned char*>(const_cast<void*>(m_fixedData.pSurfList[0].pSysMem)) + offset;
-		if (0.0f != reinterpret_cast<D3DTLVERTEX*>(data)->rhw)
-		{
-			return;
-		}
-
-		for (UINT i = 0; i < count; ++i)
-		{
-			if (0.0f == reinterpret_cast<D3DTLVERTEX*>(data)->rhw)
-			{
-				reinterpret_cast<D3DTLVERTEX*>(data)->rhw = 1.0f;
-			}
-			data += stride;
 		}
 	}
 

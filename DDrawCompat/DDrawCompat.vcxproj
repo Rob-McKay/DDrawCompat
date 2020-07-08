@@ -78,7 +78,7 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
-      <PreprocessorDefinitions>DEBUGLOGS;CINTERFACE;_NO_DDRAWINT_NO_COM;PSAPI_VERSION=1;WIN32;_DEBUG;_WINDOWS;_USRDLL;DDRAWCOMPAT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUGLOGS;WIN32_LEAN_AND_MEAN;CINTERFACE;_NO_DDRAWINT_NO_COM;PSAPI_VERSION=1;WIN32;_DEBUG;_WINDOWS;_USRDLL;DDRAWCOMPAT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -87,7 +87,6 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>Dll/DDrawCompat.def</ModuleDefinitionFile>
       <AdditionalDependencies>dxguid.lib;detours.lib;msimg32.lib;oleacc.lib;psapi.lib;uxtheme.lib;dwmapi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
@@ -99,14 +98,13 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
-      <PreprocessorDefinitions>CINTERFACE;_NO_DDRAWINT_NO_COM;PSAPI_VERSION=1;WIN32;NDEBUG;_WINDOWS;_USRDLL;DDRAWCOMPAT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;CINTERFACE;_NO_DDRAWINT_NO_COM;PSAPI_VERSION=1;WIN32;NDEBUG;_WINDOWS;_USRDLL;DDRAWCOMPAT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>Dll/DDrawCompat.def</ModuleDefinitionFile>
       <AdditionalDependencies>dxguid.lib;detours.lib;msimg32.lib;oleacc.lib;psapi.lib;uxtheme.lib;dwmapi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
@@ -118,14 +116,13 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
-      <PreprocessorDefinitions>DEBUGLOGS;CINTERFACE;_NO_DDRAWINT_NO_COM;PSAPI_VERSION=1;WIN32;NDEBUG;_WINDOWS;_USRDLL;DDRAWCOMPAT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DEBUGLOGS;WIN32_LEAN_AND_MEAN;CINTERFACE;_NO_DDRAWINT_NO_COM;PSAPI_VERSION=1;WIN32;NDEBUG;_WINDOWS;_USRDLL;DDRAWCOMPAT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>Dll/DDrawCompat.def</ModuleDefinitionFile>
       <AdditionalDependencies>dxguid.lib;detours.lib;msimg32.lib;oleacc.lib;psapi.lib;uxtheme.lib;dwmapi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
@@ -157,10 +154,14 @@
     <ClInclude Include="D3dDdi\Device.h" />
     <ClInclude Include="D3dDdi\DeviceCallbacks.h" />
     <ClInclude Include="D3dDdi\DeviceFuncs.h" />
+    <ClInclude Include="D3dDdi\DeviceState.h" />
+    <ClInclude Include="D3dDdi\DrawPrimitive.h" />
+    <ClInclude Include="D3dDdi\DynamicBuffer.h" />
     <ClInclude Include="D3dDdi\FormatInfo.h" />
     <ClInclude Include="D3dDdi\Hooks.h" />
     <ClInclude Include="D3dDdi\KernelModeThunks.h" />
     <ClInclude Include="D3dDdi\Log\AdapterFuncsLog.h" />
+    <ClInclude Include="D3dDdi\Log\CommonLog.h" />
     <ClInclude Include="D3dDdi\Log\DeviceCallbacksLog.h" />
     <ClInclude Include="D3dDdi\Log\DeviceFuncsLog.h" />
     <ClInclude Include="D3dDdi\Log\KernelModeThunksLog.h" />
@@ -170,7 +171,6 @@
     <ClInclude Include="D3dDdi\Visitors\AdapterFuncsVisitor.h" />
     <ClInclude Include="D3dDdi\Visitors\DeviceCallbacksVisitor.h" />
     <ClInclude Include="D3dDdi\Visitors\DeviceFuncsVisitor.h" />
-    <ClInclude Include="DDraw\ActivateAppHandler.h" />
     <ClInclude Include="DDraw\Blitter.h" />
     <ClInclude Include="DDraw\DirectDraw.h" />
     <ClInclude Include="DDraw\DirectDrawClipper.h" />
@@ -178,6 +178,7 @@
     <ClInclude Include="DDraw\DirectDrawPalette.h" />
     <ClInclude Include="DDraw\DirectDrawSurface.h" />
     <ClInclude Include="DDraw\Hooks.h" />
+    <ClInclude Include="DDraw\Log.h" />
     <ClInclude Include="DDraw\ScopedThreadLock.h" />
     <ClInclude Include="DDraw\Surfaces\PrimarySurface.h" />
     <ClInclude Include="DDraw\Surfaces\PrimarySurfaceImpl.h" />
@@ -194,6 +195,9 @@
     <ClInclude Include="Direct3d\DepthBuffer.h" />
     <ClInclude Include="Direct3d\Direct3d.h" />
     <ClInclude Include="Direct3d\Direct3dDevice.h" />
+    <ClInclude Include="Direct3d\Direct3dExecuteBuffer.h" />
+    <ClInclude Include="Direct3d\Direct3dLight.h" />
+    <ClInclude Include="Direct3d\Direct3dMaterial.h" />
     <ClInclude Include="Direct3d\Direct3dTexture.h" />
     <ClInclude Include="Direct3d\Direct3dVertexBuffer.h" />
     <ClInclude Include="Direct3d\Direct3dViewport.h" />
@@ -201,12 +205,16 @@
     <ClInclude Include="Direct3d\Log.h" />
     <ClInclude Include="Direct3d\Types.h" />
     <ClInclude Include="Direct3d\Visitors\Direct3dDeviceVtblVisitor.h" />
+    <ClInclude Include="Direct3d\Visitors\Direct3dExecuteBufferVtblVisitor.h" />
+    <ClInclude Include="Direct3d\Visitors\Direct3dLightVtblVisitor.h" />
+    <ClInclude Include="Direct3d\Visitors\Direct3dMaterialVtblVisitor.h" />
     <ClInclude Include="Direct3d\Visitors\Direct3dTextureVtblVisitor.h" />
     <ClInclude Include="Direct3d\Visitors\Direct3dVertexBufferVtblVisitor.h" />
     <ClInclude Include="Direct3d\Visitors\Direct3dViewportVtblVisitor.h" />
     <ClInclude Include="Direct3d\Visitors\Direct3dVtblVisitor.h" />
-    <ClInclude Include="Dll\Procs.h" />
+    <ClInclude Include="Dll\Dll.h" />
     <ClInclude Include="Gdi\AccessGuard.h" />
+    <ClInclude Include="Gdi\Font.h" />
     <ClInclude Include="Gdi\Gdi.h" />
     <ClInclude Include="Gdi\Caret.h" />
     <ClInclude Include="Gdi\Dc.h" />
@@ -222,9 +230,11 @@
     <ClInclude Include="Gdi\Window.h" />
     <ClInclude Include="Gdi\WinProc.h" />
     <ClInclude Include="Win32\DisplayMode.h" />
-    <ClInclude Include="Win32\FontSmoothing.h" />
+    <ClInclude Include="Win32\Log.h" />
+    <ClInclude Include="Win32\MemoryManagement.h" />
     <ClInclude Include="Win32\MsgHooks.h" />
     <ClInclude Include="Win32\Registry.h" />
+    <ClInclude Include="Win32\WaitFunctions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\Log.cpp" />
@@ -236,16 +246,19 @@
     <ClCompile Include="D3dDdi\Device.cpp" />
     <ClCompile Include="D3dDdi\DeviceCallbacks.cpp" />
     <ClCompile Include="D3dDdi\DeviceFuncs.cpp" />
+    <ClCompile Include="D3dDdi\DeviceState.cpp" />
+    <ClCompile Include="D3dDdi\DrawPrimitive.cpp" />
+    <ClCompile Include="D3dDdi\DynamicBuffer.cpp" />
     <ClCompile Include="D3dDdi\FormatInfo.cpp" />
     <ClCompile Include="D3dDdi\Hooks.cpp" />
     <ClCompile Include="D3dDdi\KernelModeThunks.cpp" />
     <ClCompile Include="D3dDdi\Log\AdapterFuncsLog.cpp" />
+    <ClCompile Include="D3dDdi\Log\CommonLog.cpp" />
     <ClCompile Include="D3dDdi\Log\DeviceCallbacksLog.cpp" />
     <ClCompile Include="D3dDdi\Log\DeviceFuncsLog.cpp" />
     <ClCompile Include="D3dDdi\Log\KernelModeThunksLog.cpp" />
     <ClCompile Include="D3dDdi\Resource.cpp" />
     <ClCompile Include="D3dDdi\ScopedCriticalSection.cpp" />
-    <ClCompile Include="DDraw\ActivateAppHandler.cpp" />
     <ClCompile Include="DDraw\Blitter.cpp" />
     <ClCompile Include="DDraw\DirectDraw.cpp" />
     <ClCompile Include="DDraw\DirectDrawClipper.cpp" />
@@ -254,6 +267,7 @@
     <ClCompile Include="DDraw\DirectDrawSurface.cpp" />
     <ClCompile Include="DDraw\Hooks.cpp" />
     <ClCompile Include="DDraw\IReleaseNotifier.cpp" />
+    <ClCompile Include="DDraw\Log.cpp" />
     <ClCompile Include="DDraw\RealPrimarySurface.cpp" />
     <ClCompile Include="DDraw\Surfaces\PrimarySurface.cpp" />
     <ClCompile Include="DDraw\Surfaces\PrimarySurfaceImpl.cpp" />
@@ -262,15 +276,18 @@
     <ClCompile Include="Direct3d\DepthBuffer.cpp" />
     <ClCompile Include="Direct3d\Direct3d.cpp" />
     <ClCompile Include="Direct3d\Direct3dDevice.cpp" />
+    <ClCompile Include="Direct3d\Direct3dExecuteBuffer.cpp" />
+    <ClCompile Include="Direct3d\Direct3dLight.cpp" />
+    <ClCompile Include="Direct3d\Direct3dMaterial.cpp" />
     <ClCompile Include="Direct3d\Direct3dTexture.cpp" />
     <ClCompile Include="Direct3d\Direct3dVertexBuffer.cpp" />
     <ClCompile Include="Direct3d\Direct3dViewport.cpp" />
     <ClCompile Include="Direct3d\Hooks.cpp" />
     <ClCompile Include="Direct3d\Log.cpp" />
-    <ClCompile Include="Dll\Procs.cpp" />
     <ClCompile Include="Dll\DllMain.cpp" />
-    <ClCompile Include="Dll\UnmodifiedProcs.cpp" />
+    <ClCompile Include="Dll\Dll.cpp" />
     <ClCompile Include="Gdi\AccessGuard.cpp" />
+    <ClCompile Include="Gdi\Font.cpp" />
     <ClCompile Include="Gdi\Gdi.cpp" />
     <ClCompile Include="Gdi\Caret.cpp" />
     <ClCompile Include="Gdi\Dc.cpp" />
@@ -286,12 +303,11 @@
     <ClCompile Include="Gdi\Window.cpp" />
     <ClCompile Include="Gdi\WinProc.cpp" />
     <ClCompile Include="Win32\DisplayMode.cpp" />
-    <ClCompile Include="Win32\FontSmoothing.cpp" />
+    <ClCompile Include="Win32\Log.cpp" />
+    <ClCompile Include="Win32\MemoryManagement.cpp" />
     <ClCompile Include="Win32\MsgHooks.cpp" />
     <ClCompile Include="Win32\Registry.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Dll\DDrawCompat.def" />
+    <ClCompile Include="Win32\WaitFunctions.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

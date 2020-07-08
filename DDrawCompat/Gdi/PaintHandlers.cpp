@@ -13,7 +13,23 @@
 #include "Gdi/TitleBar.h"
 #include "Gdi/VirtualScreen.h"
 #include "Gdi/Window.h"
-#include "Win32/Registry.h"
+
+std::ostream& operator<<(std::ostream& os, const MENUITEMINFOW& val)
+{
+	return Compat::LogStruct(os)
+		<< val.cbSize
+		<< Compat::hex(val.fMask)
+		<< Compat::hex(val.fType)
+		<< Compat::hex(val.fState)
+		<< val.wID
+		<< val.hSubMenu
+		<< val.hbmpChecked
+		<< val.hbmpUnchecked
+		<< Compat::hex(val.dwItemData)
+		<< val.dwTypeData
+		<< val.cch
+		<< (val.cbSize > offsetof(MENUITEMINFOW, hbmpItem) ? val.hbmpItem : nullptr);
+}
 
 namespace
 {
@@ -86,7 +102,8 @@ namespace
 					g_currentUser32WndProc->oldWndProc = wndProc;
 					g_currentUser32WndProc->oldWndProcTrampoline = wndProc;
 					Compat::hookFunction(reinterpret_cast<void*&>(g_currentUser32WndProc->oldWndProcTrampoline),
-						g_currentUser32WndProc->newWndProc);
+						g_currentUser32WndProc->newWndProc,
+						g_currentUser32WndProc->procName.c_str());
 				}
 			}
 		}
@@ -143,9 +160,9 @@ namespace
 	}
 
 	LRESULT defPaintProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC origWndProc,
-		const char* origWndProcName)
+		[[maybe_unused]] const char* origWndProcName)
 	{
-		LOG_FUNC(origWndProcName, hwnd, Compat::hex(msg), Compat::hex(wParam), Compat::hex(lParam));
+		LOG_FUNC(origWndProcName, hwnd, Compat::logWm(msg), Compat::hex(wParam), Compat::hex(lParam));
 		return LOG_RESULT(defPaintProc(hwnd, msg, wParam, lParam, origWndProc));
 	}
 
@@ -157,23 +174,6 @@ namespace
 	LRESULT WINAPI defWindowProcW(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		return defPaintProc(hwnd, msg, wParam, lParam, CALL_ORIG_FUNC(DefWindowProcW), "defWindowProcW");
-	}
-
-	void disableImmersiveContextMenus()
-	{
-		// Immersive context menus don't display properly (empty items) when theming is disabled
-		Win32::Registry::setValue(
-			HKEY_LOCAL_MACHINE,
-			"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FlightedFeatures",
-			"ImmersiveContextMenu",
-			0);
-
-		// An update in Windows 10 seems to have moved the key from the above location
-		Win32::Registry::setValue(
-			HKEY_LOCAL_MACHINE,
-			"Software\\Microsoft\\Windows\\CurrentVersion\\FlightedFeatures",
-			"ImmersiveContextMenu",
-			0);
 	}
 
 	LRESULT editWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC origWndProc)
@@ -269,6 +269,7 @@ namespace
 		case WM_PAINT:
 		{
 			D3dDdi::ScopedCriticalSection lock;
+			RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME);
 			return onPaint(hwnd, origWndProc);
 		}
 
@@ -413,15 +414,26 @@ namespace
 		}
 	}
 
+	BOOL WINAPI setMenuItemInfoW(HMENU hmenu, UINT item, BOOL fByPositon, LPCMENUITEMINFOW lpmii)
+	{
+		LOG_FUNC("SetMenuItemInfoW", hmenu, item, fByPositon, lpmii);
+		if (lpmii && (lpmii->fMask & (MIIM_TYPE | MIIM_FTYPE)) && MFT_OWNERDRAW == lpmii->fType)
+		{
+			SetLastError(ERROR_NOT_SUPPORTED);
+			return LOG_RESULT(FALSE);
+		}
+		return LOG_RESULT(CALL_ORIG_FUNC(SetMenuItemInfoW)(hmenu, item, fByPositon, lpmii));
+	}
+
 	LRESULT staticWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC origWndProc)
 	{
 		return defPaintProc(hwnd, msg, wParam, lParam, origWndProc);
 	}
 
 	LRESULT CALLBACK user32WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
-		const std::string& procName, WndProcHook wndProcHook, WNDPROC oldWndProcTrampoline)
+		[[maybe_unused]] const std::string& procName, WndProcHook wndProcHook, WNDPROC oldWndProcTrampoline)
 	{
-		LOG_FUNC(procName.c_str(), hwnd, Compat::hex(uMsg), Compat::hex(wParam), Compat::hex(lParam));
+		LOG_FUNC(procName.c_str(), hwnd, Compat::logWm(uMsg), Compat::hex(wParam), Compat::hex(lParam));
 		return LOG_RESULT(wndProcHook(hwnd, uMsg, wParam, lParam, oldWndProcTrampoline));
 	}
 
@@ -446,8 +458,6 @@ namespace Gdi
 	{
 		void installHooks()
 		{
-			disableImmersiveContextMenus();
-
 #define HOOK_USER32_WNDPROC(className, wndProcHook) hookUser32WndProc<wndProcHook>(className, #wndProcHook)
 #define HOOK_USER32_WNDPROCW(className, wndProcHook) hookUser32WndProcW<wndProcHook>(className, #wndProcHook)
 
@@ -480,6 +490,7 @@ namespace Gdi
 			HOOK_FUNCTION(user32, DefWindowProcW, defWindowProcW);
 			HOOK_FUNCTION(user32, DefDlgProcA, defDlgProcA);
 			HOOK_FUNCTION(user32, DefDlgProcW, defDlgProcW);
+			HOOK_FUNCTION(user32, SetMenuItemInfoW, setMenuItemInfoW);
 		}
 
 		void onCreateWindow(HWND hwnd)

@@ -117,9 +117,6 @@
     <ClInclude Include="DDraw\RealPrimarySurface.h">
       <Filter>Header Files\DDraw</Filter>
     </ClInclude>
-    <ClInclude Include="DDraw\ActivateAppHandler.h">
-      <Filter>Header Files\DDraw</Filter>
-    </ClInclude>
     <ClInclude Include="DDraw\Hooks.h">
       <Filter>Header Files\DDraw</Filter>
     </ClInclude>
@@ -225,9 +222,6 @@
     <ClInclude Include="Direct3d\Visitors\Direct3dVtblVisitor.h">
       <Filter>Header Files\Direct3d\Visitors</Filter>
     </ClInclude>
-    <ClInclude Include="Win32\FontSmoothing.h">
-      <Filter>Header Files\Win32</Filter>
-    </ClInclude>
     <ClInclude Include="Win32\MsgHooks.h">
       <Filter>Header Files\Win32</Filter>
     </ClInclude>
@@ -236,9 +230,6 @@
     </ClInclude>
     <ClInclude Include="Config\Config.h">
       <Filter>Header Files\Config</Filter>
-    </ClInclude>
-    <ClInclude Include="Dll\Procs.h">
-      <Filter>Header Files\Dll</Filter>
     </ClInclude>
     <ClInclude Include="DDraw\Surfaces\Surface.h">
       <Filter>Header Files\DDraw\Surfaces</Filter>
@@ -357,6 +348,54 @@
     <ClInclude Include="Direct3d\Log.h">
       <Filter>Header Files\Direct3d</Filter>
     </ClInclude>
+    <ClInclude Include="Win32\Log.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="DDraw\Log.h">
+      <Filter>Header Files\DDraw</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\WaitFunctions.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3d\Direct3dMaterial.h">
+      <Filter>Header Files\Direct3d</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3d\Visitors\Direct3dMaterialVtblVisitor.h">
+      <Filter>Header Files\Direct3d\Visitors</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3d\Visitors\Direct3dLightVtblVisitor.h">
+      <Filter>Header Files\Direct3d\Visitors</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3d\Direct3dLight.h">
+      <Filter>Header Files\Direct3d</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3d\Visitors\Direct3dExecuteBufferVtblVisitor.h">
+      <Filter>Header Files\Direct3d\Visitors</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3d\Direct3dExecuteBuffer.h">
+      <Filter>Header Files\Direct3d</Filter>
+    </ClInclude>
+    <ClInclude Include="Gdi\Font.h">
+      <Filter>Header Files\Gdi</Filter>
+    </ClInclude>
+    <ClInclude Include="Dll\Dll.h">
+      <Filter>Header Files\Dll</Filter>
+    </ClInclude>
+    <ClInclude Include="D3dDdi\Log\CommonLog.h">
+      <Filter>Header Files\D3dDdi\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="D3dDdi\DrawPrimitive.h">
+      <Filter>Header Files\D3dDdi</Filter>
+    </ClInclude>
+    <ClInclude Include="D3dDdi\DynamicBuffer.h">
+      <Filter>Header Files\D3dDdi</Filter>
+    </ClInclude>
+    <ClInclude Include="D3dDdi\DeviceState.h">
+      <Filter>Header Files\D3dDdi</Filter>
+    </ClInclude>
+    <ClInclude Include="Win32\MemoryManagement.h">
+      <Filter>Header Files\Win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Gdi\Gdi.cpp">
@@ -393,9 +432,6 @@
       <Filter>Source Files\DDraw</Filter>
     </ClCompile>
     <ClCompile Include="DDraw\RealPrimarySurface.cpp">
-      <Filter>Source Files\DDraw</Filter>
-    </ClCompile>
-    <ClCompile Include="DDraw\ActivateAppHandler.cpp">
       <Filter>Source Files\DDraw</Filter>
     </ClCompile>
     <ClCompile Include="DDraw\Hooks.cpp">
@@ -446,23 +482,11 @@
     <ClCompile Include="Common\Log.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
-    <ClCompile Include="Win32\FontSmoothing.cpp">
-      <Filter>Source Files\Win32</Filter>
-    </ClCompile>
     <ClCompile Include="Win32\MsgHooks.cpp">
       <Filter>Source Files\Win32</Filter>
     </ClCompile>
     <ClCompile Include="Win32\Registry.cpp">
       <Filter>Source Files\Win32</Filter>
-    </ClCompile>
-    <ClCompile Include="Dll\DllMain.cpp">
-      <Filter>Source Files\Dll</Filter>
-    </ClCompile>
-    <ClCompile Include="Dll\Procs.cpp">
-      <Filter>Source Files\Dll</Filter>
-    </ClCompile>
-    <ClCompile Include="Dll\UnmodifiedProcs.cpp">
-      <Filter>Source Files\Dll</Filter>
     </ClCompile>
     <ClCompile Include="DDraw\Surfaces\Surface.cpp">
       <Filter>Source Files\DDraw\Surfaces</Filter>
@@ -545,10 +569,47 @@
     <ClCompile Include="Direct3d\Log.cpp">
       <Filter>Source Files\Direct3d</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Dll\DDrawCompat.def">
+    <ClCompile Include="Win32\Log.cpp">
+      <Filter>Source Files\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="DDraw\Log.cpp">
+      <Filter>Source Files\DDraw</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\WaitFunctions.cpp">
+      <Filter>Source Files\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Direct3d\Direct3dMaterial.cpp">
+      <Filter>Source Files\Direct3d</Filter>
+    </ClCompile>
+    <ClCompile Include="Direct3d\Direct3dLight.cpp">
+      <Filter>Source Files\Direct3d</Filter>
+    </ClCompile>
+    <ClCompile Include="Direct3d\Direct3dExecuteBuffer.cpp">
+      <Filter>Source Files\Direct3d</Filter>
+    </ClCompile>
+    <ClCompile Include="Gdi\Font.cpp">
+      <Filter>Source Files\Gdi</Filter>
+    </ClCompile>
+    <ClCompile Include="Dll\DllMain.cpp">
       <Filter>Source Files\Dll</Filter>
-    </None>
+    </ClCompile>
+    <ClCompile Include="Dll\Dll.cpp">
+      <Filter>Source Files\Dll</Filter>
+    </ClCompile>
+    <ClCompile Include="D3dDdi\Log\CommonLog.cpp">
+      <Filter>Source Files\D3dDdi\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="D3dDdi\DrawPrimitive.cpp">
+      <Filter>Source Files\D3dDdi</Filter>
+    </ClCompile>
+    <ClCompile Include="D3dDdi\DynamicBuffer.cpp">
+      <Filter>Source Files\D3dDdi</Filter>
+    </ClCompile>
+    <ClCompile Include="D3dDdi\DeviceState.cpp">
+      <Filter>Source Files\D3dDdi</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32\MemoryManagement.cpp">
+      <Filter>Source Files\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -68,6 +68,12 @@ namespace
 
 		for (auto windowPair : Gdi::Window::getWindows())
 		{
+			HWND presentationWindow = windowPair.second->getPresentationWindow();
+			if (!presentationWindow)
+			{
+				continue;
+			}
+
 			Gdi::Region visibleRegion = windowPair.second->getVisibleRegion();
 			if (visibleRegion.isEmpty())
 			{
@@ -93,7 +99,6 @@ namespace
 			}
 
 			Gdi::AccessGuard accessGuard(Gdi::ACCESS_READ, !primaryRegion);
-			HWND presentationWindow = windowPair.second->getPresentationWindow();
 			HDC dc = GetWindowDC(presentationWindow);
 			RECT rect = windowPair.second->getWindowRect();
 			visibleRegion.offset(-rect.left, -rect.top);
@@ -460,31 +465,16 @@ namespace
 
 	DWORD WINAPI updateThreadProc(LPVOID /*lpParameter*/)
 	{
-		const int msPresentDelayAfterVBlank = 1;
-		bool waitForVBlank = true;
-
 		while (!g_stopUpdateThread)
 		{
-			if (waitForVBlank)
+			D3dDdi::KernelModeThunks::waitForVerticalBlank();
+			if (!g_isFullScreen)
 			{
-				D3dDdi::KernelModeThunks::waitForVerticalBlank();
-				if (!g_isFullScreen)
-				{
-					g_isPresentPending = false;
-				}
+				g_isPresentPending = false;
 			}
 
-			Sleep(msPresentDelayAfterVBlank);
-
-			DDraw::ScopedThreadLock lock;
-			Gdi::Caret::blink();
-			waitForVBlank = Time::qpcToMs(Time::queryPerformanceCounter() -
-				D3dDdi::KernelModeThunks::getQpcLastVerticalBlank()) >= msPresentDelayAfterVBlank;
-
-			if (waitForVBlank && (g_isUpdatePending || g_isGdiUpdatePending) && !isPresentPending())
-			{
-				updateNowIfNotBusy();
-			}
+			Sleep(1);
+			DDraw::RealPrimarySurface::flush();
 		}
 
 		return 0;
@@ -582,6 +572,16 @@ namespace DDraw
 		}
 
 		return DD_OK;
+	}
+
+	void RealPrimarySurface::flush()
+	{
+		DDraw::ScopedThreadLock lock;
+		Gdi::Caret::blink();
+		if ((g_isUpdatePending || g_isGdiUpdatePending) && !isPresentPending())
+		{
+			updateNowIfNotBusy();
+		}
 	}
 
 	void RealPrimarySurface::gdiUpdate()

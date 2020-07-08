@@ -1,15 +1,16 @@
 #include <string>
 #include <vector>
 
-#include "Common/CompatPtr.h"
-#include "Common/Hook.h"
-#include "DDraw/DirectDraw.h"
-#include "DDraw/ScopedThreadLock.h"
-#include "Gdi/Gdi.h"
-#include "Gdi/VirtualScreen.h"
-#include "Win32/DisplayMode.h"
+#include <Common/CompatPtr.h>
+#include <Common/Hook.h>
+#include <DDraw/DirectDraw.h>
+#include <DDraw/ScopedThreadLock.h>
+#include <Gdi/Gdi.h>
+#include <Gdi/VirtualScreen.h>
+#include <Win32/DisplayMode.h>
 
-BOOL WINAPI DWM8And16Bit_IsShimApplied_CallOut() { return FALSE; };
+BOOL WINAPI DWM8And16Bit_IsShimApplied_CallOut() { return FALSE; }
+BOOL WINAPI SE_COM_HookInterface(CLSID*, GUID*, DWORD, DWORD) { return 0; }
 
 namespace
 {
@@ -34,13 +35,10 @@ namespace
 	DWORD g_currentBpp = 0;
 	DWORD g_lastBpp = 0;
 
-	BOOL WINAPI enumDisplaySettingsExA(
-		LPCSTR lpszDeviceName, DWORD iModeNum, DEVMODEA* lpDevMode, DWORD dwFlags);
-	BOOL WINAPI enumDisplaySettingsExW(
-		LPCWSTR lpszDeviceName, DWORD iModeNum, DEVMODEW* lpDevMode, DWORD dwFlags);
+	BOOL WINAPI dwm8And16BitIsShimAppliedCallOut();
+	BOOL WINAPI seComHookInterface(CLSID* clsid, GUID* iid, DWORD unk1, DWORD unk2);
 
-	template <typename CStr, typename DevMode, typename ChangeDisplaySettingsExFunc,
-		typename EnumDisplaySettingsExFunc>
+	template <typename CStr, typename DevMode, typename ChangeDisplaySettingsExFunc, typename EnumDisplaySettingsExFunc>
 	LONG changeDisplaySettingsEx(
 		ChangeDisplaySettingsExFunc origChangeDisplaySettingsEx,
 		EnumDisplaySettingsExFunc origEnumDisplaySettingsEx,
@@ -121,9 +119,26 @@ namespace
 			lpszDeviceName, lpDevMode, hwnd, dwflags, lParam));
 	}
 
+	void disableDwm8And16BitMitigation()
+	{
+		auto user32 = GetModuleHandle("user32");
+		Compat::removeShim(user32, "ChangeDisplaySettingsA");
+		Compat::removeShim(user32, "ChangeDisplaySettingsW");
+		Compat::removeShim(user32, "ChangeDisplaySettingsExA");
+		Compat::removeShim(user32, "ChangeDisplaySettingsExW");
+		Compat::removeShim(user32, "EnumDisplaySettingsA");
+		Compat::removeShim(user32, "EnumDisplaySettingsW");
+		Compat::removeShim(user32, "EnumDisplaySettingsExA");
+		Compat::removeShim(user32, "EnumDisplaySettingsExW");
+
+		HOOK_FUNCTION(apphelp, DWM8And16Bit_IsShimApplied_CallOut, dwm8And16BitIsShimAppliedCallOut);
+		HOOK_FUNCTION(apphelp, SE_COM_HookInterface, seComHookInterface);
+	}
+
 	BOOL WINAPI dwm8And16BitIsShimAppliedCallOut()
 	{
-		return FALSE;
+		LOG_FUNC("DWM8And16Bit_IsShimApplied_CallOut");
+		return LOG_RESULT(FALSE);
 	}
 
 	template <typename Char, typename DevMode, typename EnumDisplaySettingsExFunc>
@@ -212,14 +227,46 @@ namespace
 			}
 			break;
 
+		case COLORRES:
+			if (8 == g_currentBpp && Gdi::isDisplayDc(hdc))
+			{
+				return 24;
+			}
+			break;
+
+		case NUMCOLORS:
+		case NUMRESERVED:
+			if (8 == g_currentBpp && Gdi::isDisplayDc(hdc))
+			{
+				return 20;
+			}
+			break;
+
 		case RASTERCAPS:
 			if (8 == g_currentBpp && Gdi::isDisplayDc(hdc))
 			{
 				return LOG_RESULT(CALL_ORIG_FUNC(GetDeviceCaps)(hdc, nIndex) | RC_PALETTE);
 			}
 			break;
+
+		case SIZEPALETTE:
+			if (8 == g_currentBpp && Gdi::isDisplayDc(hdc))
+			{
+				return 256;
+			}
+			break;
 		}
 		return LOG_RESULT(CALL_ORIG_FUNC(GetDeviceCaps)(hdc, nIndex));
+	}
+
+	BOOL WINAPI seComHookInterface(CLSID* clsid, GUID* iid, DWORD unk1, DWORD unk2)
+	{
+		LOG_FUNC("SE_COM_HookInterface", clsid, iid, unk1, unk2);
+		if (clsid && (CLSID_DirectDraw == *clsid || CLSID_DirectDraw7 == *clsid))
+		{
+			return LOG_RESULT(0);
+		}
+		return LOG_RESULT(CALL_ORIG_FUNC(SE_COM_HookInterface)(clsid, iid, unk1, unk2));
 	}
 }
 
@@ -237,11 +284,6 @@ namespace Win32
 			static auto ddQueryDisplaySettingsUniqueness = reinterpret_cast<ULONG(APIENTRY*)()>(
 				GetProcAddress(GetModuleHandle("gdi32"), "GdiEntry13"));
 			return ddQueryDisplaySettingsUniqueness();
-		}
-
-		void disableDwm8And16BitMitigation()
-		{
-			HOOK_FUNCTION(apphelp, DWM8And16Bit_IsShimApplied_CallOut, dwm8And16BitIsShimAppliedCallOut);
 		}
 
 		void installHooks()
@@ -264,6 +306,8 @@ namespace Win32
 			HOOK_FUNCTION(user32, EnumDisplaySettingsExA, enumDisplaySettingsExA);
 			HOOK_FUNCTION(user32, EnumDisplaySettingsExW, enumDisplaySettingsExW);
 			HOOK_FUNCTION(gdi32, GetDeviceCaps, getDeviceCaps);
+
+			disableDwm8And16BitMitigation();
 		}
 	}
 }

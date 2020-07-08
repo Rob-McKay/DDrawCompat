@@ -1,17 +1,23 @@
 #include <d3d.h>
 
-#include "Common/CompatRef.h"
-#include "Common/Log.h"
-#include "Direct3d/Direct3d.h"
-#include "Direct3d/Direct3dDevice.h"
-#include "Direct3d/Direct3dTexture.h"
-#include "Direct3d/Direct3dVertexBuffer.h"
-#include "Direct3d/Direct3dViewport.h"
-#include "Direct3d/Hooks.h"
+#include <Common/CompatRef.h>
+#include <Common/Log.h>
+#include <Direct3d/Direct3d.h>
+#include <Direct3d/Direct3dDevice.h>
+#include <Direct3d/Direct3dExecuteBuffer.h>
+#include <Direct3d/Direct3dLight.h>
+#include <Direct3d/Direct3dMaterial.h>
+#include <Direct3d/Direct3dTexture.h>
+#include <Direct3d/Direct3dVertexBuffer.h>
+#include <Direct3d/Direct3dViewport.h>
+#include <Direct3d/Hooks.h>
 
 namespace
 {
 	void hookDirect3dDevice(CompatRef<IDirect3D3> d3d, CompatRef<IDirectDrawSurface4> renderTarget);
+	void hookDirect3dExecuteBuffer(CompatRef<IDirect3DDevice> dev);
+	void hookDirect3dLight(CompatRef<IDirect3D3> d3d);
+	void hookDirect3dMaterial(CompatRef<IDirect3D3> d3d);
 	void hookDirect3dTexture(CompatRef<IDirectDraw> dd);
 	void hookDirect3dVertexBuffer(CompatRef<IDirect3D3> d3d);
 	void hookDirect3dVertexBuffer7(CompatRef<IDirect3D7> d3d);
@@ -70,6 +76,8 @@ namespace
 			hookVtable<IDirect3D2>(d3d);
 			hookVtable<IDirect3D3>(d3d);
 			hookDirect3dDevice(*d3d, renderTarget);
+			hookDirect3dLight(*d3d);
+			hookDirect3dMaterial(*d3d);
 			hookDirect3dTexture(dd);
 			hookDirect3dVertexBuffer(*d3d);
 			hookDirect3dViewport(*d3d);
@@ -100,6 +108,58 @@ namespace
 		hookVtable<IDirect3DDevice>(d3dDevice);
 		hookVtable<IDirect3DDevice2>(d3dDevice);
 		hookVtable<IDirect3DDevice3>(d3dDevice);
+
+		CompatPtr<IDirect3DDevice> dev(d3dDevice);
+		if (dev)
+		{
+			hookDirect3dExecuteBuffer(*dev);
+		}
+	}
+
+	void hookDirect3dExecuteBuffer(CompatRef<IDirect3DDevice> dev)
+	{
+		D3DEXECUTEBUFFERDESC desc = {};
+		desc.dwSize = sizeof(desc);
+		desc.dwFlags = D3DDEB_BUFSIZE;
+		desc.dwBufferSize = 1;
+
+		CompatPtr<IDirect3DExecuteBuffer> buffer;
+		HRESULT result = dev->CreateExecuteBuffer(&dev, &desc, &buffer.getRef(), nullptr);
+		if (FAILED(result))
+		{
+			Compat::Log() << "ERROR: Failed to create an execute buffer for hooking: " << Compat::hex(result);
+			return;
+		}
+
+		hookVtable<IDirect3DExecuteBuffer>(buffer);
+	}
+
+	void hookDirect3dLight(CompatRef<IDirect3D3> d3d)
+	{
+		CompatPtr<IDirect3DLight> light;
+		HRESULT result = d3d->CreateLight(&d3d, &light.getRef(), nullptr);
+		if (FAILED(result))
+		{
+			Compat::Log() << "ERROR: Failed to create a light for hooking: " << Compat::hex(result);
+			return;
+		}
+
+		hookVtable<IDirect3DLight>(light);
+	}
+
+	void hookDirect3dMaterial(CompatRef<IDirect3D3> d3d)
+	{
+		CompatPtr<IDirect3DMaterial3> material;
+		HRESULT result = d3d->CreateMaterial(&d3d, &material.getRef(), nullptr);
+		if (FAILED(result))
+		{
+			Compat::Log() << "ERROR: Failed to create a material for hooking: " << Compat::hex(result);
+			return;
+		}
+
+		hookVtable<IDirect3DMaterial>(material);
+		hookVtable<IDirect3DMaterial2>(material);
+		hookVtable<IDirect3DMaterial3>(material);
 	}
 
 	void hookDirect3dTexture(CompatRef<IDirectDraw> dd)
